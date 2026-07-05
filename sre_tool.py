@@ -85,6 +85,44 @@ def save_report(report):
         print("\nReport saved succesfully.")
 
 
+def parse_log_file():
+     log_path = input("\nEnter the log file path")
+
+     if not os.path.exists(log_path):
+          print("\nLog file not found.")
+          return
+     
+     total_lines = 0
+     error_count = 0
+     status_counts = {}
+
+
+     with open(log_path, "r") as file:
+          for line in file:
+               total_lines += 1
+               parts = line.split()
+
+               if len(parts) >= 9:
+                    status_code = parts[8]
+
+                    status_counts[status_code] = status_counts.get(status_code, 0) + 1
+
+                    if status_code.startswith("4") or status_code.startswith("5"):
+                         error_count += 1
+
+
+     print("\n ==== LOG ANALYSIS REPORT ====")
+     print(f"Log file: {log_path}")
+     print(f"Total lines analyzed: {total_lines}")
+     print(f"Total error responses: {error_count}")
+
+     print("\n --- Status Code Frequencies ---")
+     for code, count in status_counts.items():
+          print(f"{code}: {count}")
+
+
+
+
 def show_menu():
     print("\n==== SRE Diagnostic and Azure Deployment Tool ====")
     print("1. Run SRE Diagnostic")
@@ -104,7 +142,7 @@ def main():
                 run_diagnostic()
 
             elif choice == '2':
-                print("\nLog parsing feature coming soon...")
+               parse_log_file()
                 
             elif choice == '3':
                     print("\nAzure VM deployment feature coming soon...")
