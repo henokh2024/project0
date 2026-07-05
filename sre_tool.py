@@ -8,6 +8,13 @@ REPORT_DIR = "reports"
 HISTORY_FILE = "reports/metrics_history.json"
 
 
+RESOURCE_GROUP = "rg-project0-sre"
+VM_NAME = "project0-vm"
+LOCATION = "eastcanada"
+VM_SIZE = "Standard_B2ats_v2"
+ADMIN_USERNAME = "azureuser"
+
+
 
 def run_command(command):
     try: 
@@ -123,6 +130,67 @@ def parse_log_file():
 
 
 
+def check_azure_login():
+     print("\nChecking Azure login status...")
+
+     output = run_command("az account show")
+
+     if output.startswith("ERROR"):
+          print("\nYou are not logged in to Azure.")
+          print("Run this command first:")
+          print("az login")
+          return False
+     
+     print("Azure login verified")
+     return True
+
+
+def deploy_azure_vm():
+     print("\nWARNING: This will create Azure cloud resources.")
+     confirmation = input("Type YES to continue deployment:")
+
+     if confirmation != "YES":
+          print("Deployment cancelled")
+          return
+     
+     if not check_azure_login():
+        return
+     
+     print("\nCreating Azure resource group...")
+     group_command = (
+          f"az group create "
+          f"--name{RESOURCE_GROUP}"
+          f"--location {LOCATION}"
+     )
+     print(run_command(group_command))
+
+     print("\nCreating Azure VM with Standard_B2ats_v2 and Standard HDD")
+     vm_command  = (
+          f"az vm create "
+          f"--resource-group {RESOURCE_GROUP}"
+          f"--name {VM_NAME}"
+          f"--size {VM_SIZE}"
+          f"--admin-username {ADMIN_USERNAME}"
+          f"--generate-ssh-keys "
+          f"--storage-sku Standard_LRS"
+          f"--public-ip-sku Basic"
+     )
+     print(run_command(vm_command))
+
+     print("\nConfiguring auto-shutdown for 18:00...")
+     shutdown_command = (
+          f"az vm auto-shutodown "
+          f"--resource-group {RESOURCE_GROUP}"
+          f"--name {VM_NAME}"
+          f"--time 1800"
+     )
+     print(run_command(shutdown_command))
+
+     print("\nAzure VM deployment finished.")
+     print("When you are done, run teardown.sh todelete the resource")
+
+
+
 def show_menu():
     print("\n==== SRE Diagnostic and Azure Deployment Tool ====")
     print("1. Run SRE Diagnostic")
@@ -145,7 +213,7 @@ def main():
                parse_log_file()
                 
             elif choice == '3':
-                    print("\nAzure VM deployment feature coming soon...")
+                    deploy_azure_vm()
 
             elif choice == '4':
                  print("\nGoodbye!")
