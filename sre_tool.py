@@ -1,3 +1,45 @@
+import subprocess
+
+
+def run_command(command):
+    try: 
+        result = subprocess.run(
+          command,
+          shell=True,
+          text=True,
+          capture_output=True,
+          check=True
+     )
+          
+        return result.stdout.strip()
+
+    except subprocess.CalledProcessError as error:
+        return f"ERROR: {error.stderr.strip()}"
+
+
+def run_diagnostic():
+     print("\nRunning local system diagnostic...")
+     
+     cpu_info = run_command("ps aux --sort=-%cpu | head -n 6")
+     memory_info = run_command("free -h")
+     disk_info = run_command("df -h")
+     network_info = run_command("ss -tuln")
+
+     print(" ==== LOCAL SYSTEM DIAGNOSTIC REPORT ====")
+
+     print("\n--- Top CPU Processes ---")
+     print(cpu_info)
+
+     print("\n--- Memory Usage ---")
+     print(memory_info)
+
+     print("\n--- Disk Usage ---")
+     print(disk_info)
+
+     print("\n--- Active Network Connections ---")
+     print(network_info)
+
+
 def show_menu():
     print("\n==== SRE Diagnostic and Azure Deployment Tool ====")
     print("1. Run SRE Diagnostic")
@@ -14,7 +56,7 @@ def main():
             choice = input("\nEnter your choice:")
 
             if choice == '1':
-                print("\nDiagnostics feature coming soon...")
+                run_diagnostic()
 
             elif choice == '2':
                 print("\nLog parsing feature coming soon...")
