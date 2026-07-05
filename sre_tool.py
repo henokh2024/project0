@@ -1,4 +1,12 @@
 import subprocess
+import json
+import os
+from datetime import datetime
+
+
+REPORT_DIR = "reports"
+HISTORY_FILE = "reports/metrics_history.json"
+
 
 
 def run_command(command):
@@ -15,6 +23,8 @@ def run_command(command):
 
     except subprocess.CalledProcessError as error:
         return f"ERROR: {error.stderr.strip()}"
+    
+
 
 
 def run_diagnostic():
@@ -38,6 +48,41 @@ def run_diagnostic():
 
      print("\n--- Active Network Connections ---")
      print(network_info)
+
+
+     report = {
+        "timestamp": str(datetime.now()),
+        "cpu_info": cpu_info,
+        "memory_info": memory_info,
+        "disk_info": disk_info,
+        "network_info": network_info
+    }
+
+     save_report(report)
+
+
+
+
+def save_report(report):
+    os.makedirs(REPORT_DIR, exist_ok=True)
+
+    history =[]
+
+    if os.path.exists(HISTORY_FILE):
+        with open(HISTORY_FILE, "r") as file:
+                
+            try:
+                     history = json.load(file)
+
+            except json.JSONDecodeError:
+                     history = []
+
+        history.append(report)
+     
+        with open(HISTORY_FILE, "w") as file:
+            json.dump(history, file, indent=4)
+
+        print("\nReport saved succesfully.")
 
 
 def show_menu():
