@@ -10,7 +10,7 @@ HISTORY_FILE = "reports/metrics_history.json"
 
 RESOURCE_GROUP = "rg-project0-sre"
 VM_NAME = "project0-vm"
-LOCATION = "eastcanada"
+LOCATION = "canadaeast"
 VM_SIZE = "Standard_B2ats_v2"
 ADMIN_USERNAME = "azureuser"
 
@@ -146,48 +146,64 @@ def check_azure_login():
 
 
 def deploy_azure_vm():
-     print("\nWARNING: This will create Azure cloud resources.")
-     confirmation = input("Type YES to continue deployment:")
+    print("\nWARNING: This will create Azure cloud resources.")
+    confirmation = input("Type YES to continue deployment: ")
 
-     if confirmation != "YES":
-          print("Deployment cancelled")
-          return
-     
-     if not check_azure_login():
+    if confirmation != "YES":
+        print("Deployment cancelled.")
         return
-     
-     print("\nCreating Azure resource group...")
-     group_command = (
-          f"az group create "
-          f"--name{RESOURCE_GROUP}"
-          f"--location {LOCATION}"
-     )
-     print(run_command(group_command))
 
-     print("\nCreating Azure VM with Standard_B2ats_v2 and Standard HDD")
-     vm_command  = (
-          f"az vm create "
-          f"--resource-group {RESOURCE_GROUP}"
-          f"--name {VM_NAME}"
-          f"--size {VM_SIZE}"
-          f"--admin-username {ADMIN_USERNAME}"
-          f"--generate-ssh-keys "
-          f"--storage-sku Standard_LRS"
-          f"--public-ip-sku Basic"
-     )
-     print(run_command(vm_command))
+    if not check_azure_login():
+        return
 
-     print("\nConfiguring auto-shutdown for 18:00...")
-     shutdown_command = (
-          f"az vm auto-shutodown "
-          f"--resource-group {RESOURCE_GROUP}"
-          f"--name {VM_NAME}"
-          f"--time 1800"
-     )
-     print(run_command(shutdown_command))
+    print("\nCreating Azure resource group...")
+    group_command = (
+        f"az group create "
+        f"--name {RESOURCE_GROUP} "
+        f"--location {LOCATION}"
+    )
+    group_output = run_command(group_command)
+    print(group_output)
 
-     print("\nAzure VM deployment finished.")
-     print("When you are done, run teardown.sh todelete the resource")
+    if group_output.startswith("ERROR"):
+        print("Resource group creation failed. Stopping deployment.")
+        return
+
+    print("\nCreating Azure VM with Standard_B2ats_v2 and Standard HDD...")
+    vm_command = (
+        f"az vm create "
+        f"--resource-group {RESOURCE_GROUP} "
+        f"--name {VM_NAME} "
+        f"--image Ubuntu2204 "
+        f"--size {VM_SIZE} "
+        f"--admin-username {ADMIN_USERNAME} "
+        f"--generate-ssh-keys "
+        f"--storage-sku Standard_LRS "
+        f"--public-ip-sku Standard"
+    )
+    vm_output = run_command(vm_command)
+    print(vm_output)
+
+    if vm_output.startswith("ERROR"):
+        print("VM creation failed. Stopping deployment.")
+        return
+
+    print("\nConfiguring auto-shutdown for 18:00...")
+    shutdown_command = (
+        f"az vm auto-shutdown "
+        f"--resource-group {RESOURCE_GROUP} "
+        f"--name {VM_NAME} "
+        f"--time 1800"
+    )
+    shutdown_output = run_command(shutdown_command)
+    print(shutdown_output)
+
+    if shutdown_output.startswith("ERROR"):
+        print("Auto-shutdown configuration failed.")
+        return
+
+    print("\nAzure VM deployment finished.")
+    print("When you are done, run ./teardown.sh to delete the resources.")
 
 
 
@@ -220,7 +236,5 @@ def main():
 
                  break
             else: print("Invalid choice. Try again.")
-
-
 if __name__ == "__main__":
      main()
